@@ -1,3 +1,6 @@
+
+`include "aud_defs.vh"
+
 module aud_core (
 	// system/FIFO clock 
 	clk_sys_i,
@@ -41,3 +44,63 @@ output	[31:0]	wb_dat_o;
 input	[3:0]	wb_sel_i;
 input			wb_cyc_i, wb_stb_i, wb_we_i;
 output			wb_ack_o, wb_stall_o;
+
+wire clk_aud_rmm;
+wire clk_aud_btm;
+
+reg		[31:0]	aud_cr;
+wire	[31:0]	aud_sr;
+reg		[31:0]	aud_dr;
+reg		[31:0]	aud_addr;
+reg		[31:0]	aud_len;
+
+aud_rmm U_AudRmm(
+	.en(aud_cr[AUD_CR_MD],
+	.start_addr_i(aud_addr),
+	.len(aud_len),
+	.idle(aud_rmm_idle),
+	.clk_sys_i(clk_sys_i),
+	.clk_aud_i(clk_aud_i),
+	.rst_n_i(rst_n_i),
+	.aud_data(rmm_aud_data),
+	.aud_nrst_o(rmm_aud_nrst_o),
+	.aud_ck(rmm_aud_ck),
+	.aud_nsync_o(rmm_aud_nsync_o)
+	);
+
+aud_btm U_AudBtm(
+	.en(!aud_cr[AUD_CR_MD],
+	.idle(aud_btm_idle),
+	.clk_sys_i(clk_sys_i),
+	.rst_n_i(rst_n_i),
+	.aud_data(btm_aud_data),
+	.aud_nrst_o(btm_aud_nrst_o),
+	.aud_ck(btm_aud_ck),
+	.aud_nsync_o(btm_aud_nsync_o)
+	);
+
+if(!aud_cr[AUD_CR_MD]) begin 	// RAM Monitor Mode
+	assign aud_sr[AUD_SR_IDLE] = aud_rmm_idle;
+	assign aud_data = rmm_aud_data;
+	assign aud_nrst_o = rmm_aud_nrst_o;
+	assign aud_ck = rmm_aud_ck;
+	assign aud_nsync_o = rmm_aud_nsync_o;
+end else begin 					// Branch Trace Mode
+	assign aud_sr[AUD_SR_IDLE] = aud_btm_idle;
+	assign aud_data = btm_aud_data;
+	assign aud_nrst_o = btm_aud_nrst_o;
+	assign aud_ck = btm_aud_ck;
+	assign aud_nsync_o = btm_aud_nsync_o;
+end
+
+assign aud_md = aud_cr[AUD_CR_MD];
+
+always @(posedge clk_sys_i) begin
+	if (!rst_n_i) begin
+		// reset
+		
+	end
+	else begin
+		
+	end
+end
