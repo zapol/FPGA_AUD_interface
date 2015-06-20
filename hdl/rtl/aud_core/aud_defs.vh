@@ -13,4 +13,4 @@
 // Control Register
 `define AUD_CR_MD		0	// AUD mode (0 for Branch Trace Mode, 1 for RAM Monitor Mode)
 `define AUD_CR_EN		1	// Enable data transmission/collection will be automatically reset when transaction is finished (rising edge of AUD_SR_IDLE)
-
+`define AUD_CR_RST		2	// Enable reset state of the peripheral

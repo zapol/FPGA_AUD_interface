@@ -11,11 +11,11 @@ module aud_core (
 	rst_n_i,
 
 	// AUD signals
-	aud_data;
-	aud_nrst;
-	aud_md;
-	aud_ck;
-	aud_nsync;
+	aud_data,
+	aud_nrst,
+	aud_md,
+	aud_ck,
+	aud_nsync,
 
 	// Host control registers (WBv4 pipelined, clk_sys_i clock domain)
 	wb_adr_i,
@@ -62,35 +62,33 @@ aud_rmm U_AudRmm(
 	.clk_sys_i(clk_sys_i),
 	.clk_aud_i(clk_aud_i),
 	.rst_n_i(rst_n_i),
-	.aud_data(rmm_aud_data),
-	.aud_nrst(rmm_aud_nrst),
-	.aud_ck(rmm_aud_ck),
-	.aud_nsync(rmm_aud_nsync)
+	.aud_data(rmm_data),
+	.aud_ck(rmm_ck),
+	.aud_nsync(rmm_nsync)
 	);
 
 aud_btm U_AudBtm(
-	.en(!aud_cr[AUD_CR_MD],
-	.idle(aud_btm_idle),
-	.clk_sys_i(clk_sys_i),
-	.rst_n_i(rst_n_i),
-	.aud_data(btm_aud_data),
-	.aud_nrst(btm_aud_nrst),
-	.aud_ck(btm_aud_ck),
-	.aud_nsync(btm_aud_nsync)
+	.br_addr(btm_br_addr),
+	.addr_valid(btm_addr_valid),
+	.oe(btm_oe),
+	.rst(!rst_n_i),
+	.aud_data(btm_data),
+	.aud_ck(btm_ck),
+	.aud_nsync(btm_nsync)
 	);
 
 if(!aud_cr[AUD_CR_MD]) begin 	// RAM Monitor Mode
 	assign aud_sr[AUD_SR_IDLE] = aud_rmm_idle;
-	assign aud_data = rmm_aud_data;
-	assign aud_nrst = rmm_aud_nrst;
-	assign aud_ck = rmm_aud_ck;
-	assign aud_nsync = rmm_aud_nsync;
+	assign aud_data = rmm_data;
+	assign aud_nrst = rmm_nrst;
+	assign aud_ck = rmm_ck;
+	assign aud_nsync = rmm_nsync;
 end else begin 					// Branch Trace Mode
 	assign aud_sr[AUD_SR_IDLE] = aud_btm_idle;
-	assign aud_data = btm_aud_data;
-	assign aud_nrst = btm_aud_nrst;
-	assign aud_ck = btm_aud_ck;
-	assign aud_nsync = btm_aud_nsync;
+	assign aud_data = btm_data;
+	assign aud_nrst = btm_nrst;
+	assign aud_ck = btm_ck;
+	assign aud_nsync = btm_nsync;
 end
 
 assign aud_md = aud_cr[AUD_CR_MD];
