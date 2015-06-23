@@ -1,20 +1,20 @@
 
 module aud_btm (
-	br_addr,
-	addr_valid,
-	oe,
 	rst,
+	br_addr,
+	oe,
+	addr_valid,
 	buserror,
 	aud_data,
 	aud_ck,
 	aud_nsync
 );
 
-output [31:0] br_addr;
-output addr_valid;
-output oe;
-output buserror;
 input rst;
+output [31:0] br_addr;
+output oe;
+output addr_valid;
+output buserror;
 input [3:0] aud_data;
 input aud_ck;
 input aud_nsync;

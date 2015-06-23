@@ -1,4 +1,4 @@
-
+/*
 `include "aud_defs.vh"
 
 module aud_core (
@@ -102,3 +102,4 @@ always @(posedge clk_sys_i) begin
 		
 	end
 end
+*/

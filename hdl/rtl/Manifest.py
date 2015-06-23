@@ -1,4 +1,4 @@
-files = ["framebuffer/framebuffer.v", "framebuffer/video_mixer.v"];
+files = ["aud_core/aud_core.v"];
 
-modules = {"local" : [ "dsi_core", "fmlarb", "hpdmc", "hdmi_common", "hdmi_rx" ]}
+modules = {"local" : [ "aud_core" ]}
 
