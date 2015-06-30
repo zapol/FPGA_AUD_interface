@@ -224,9 +224,7 @@ always @(posedge aud_ck or posedge rst) begin
 					done_reg <= 1;
 			end
 			`READ_DONE: begin
-				aud_nsync_reg <= 1;
 				done_reg <= 1;
-				data_oe <= 1;
 				state <= `IDLE;
 			end
 		endcase
@@ -297,6 +295,7 @@ always @(negedge aud_ck ) begin
 			endcase
 			if(counter == (2<<size_reg)-1) begin
 				state <= `READ_DONE;
+				data_oe <= 1;
 			end else begin
 				counter <= counter+1;
 			end
