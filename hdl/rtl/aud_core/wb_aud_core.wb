@@ -1,0 +1,172 @@
+-- -*- Mode: LUA; tab-width: 2 -*-
+
+peripheral {
+	name ="AUD core";
+	prefix="aud";
+	hdl_entity="AUD_core";
+	
+
+	reg {
+		name = "Control/Status Register";
+		description = "A register controlling the behavior of AUD peripheral.";
+		prefix = "CR";
+
+		field {
+			name = "AUD Mode";
+			description = "AUD mode (0 for Branch Trace Mode, 1 for RAM Monitor Mode)";
+			prefix = "MD";
+			type = SLV;
+			size = 1;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
+		};
+		field {
+			name = "Enable";
+			description = "Enable data transmission/collection will be automatically reset when transaction is finished (rising edge of AUD_SR_IDLE)";
+			prefix = "EN";
+			type = SLV;
+			size = 1;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
+		};
+		field {
+			name = "Reset";
+			description = "Enable reset state of the peripheral";
+			prefix = "RST";
+			type = SLV;
+			size = 1;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
+		};
+		field {
+			name = "IDLE";
+			description = "Peripheral finished operation and entered idle state";
+			prefix = "IDLE";
+			type = SLV;
+			align = 8;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_FULL";
+			description = "AUD FIFO full";
+			prefix = "FF";
+			type = SLV;
+			align = 8;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_OVERFLOW";
+			description = "AUD FIFO overflow. This bit will remain until peripheral reset";
+			prefix = "FOVF";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_EMPTY";
+			description = "AUD FIFO empty";
+			prefix = "FE";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_UNDERRUN";
+			description = "AUD FIFO underrun. This bit will remain until peripheral reset";
+			prefix = "FUND";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_COUNT";
+			description = "Number of elements in AUD FIFO";
+			prefix = "FC";
+			align = 8;
+			type = SLV;
+			size = 8;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+	};
+
+	reg {
+		name = "Branch Timestamp FIFO";
+		description = "This FIFO holds the timestamps and validity information of each recorded branch (Branch Trace Mode only)";
+		prefix = "BTF";
+
+		field {
+			name = "Branch Timestamp";
+			description = "Timestamp of recorded branch";
+			prefix = "BR_TSTAMP";
+			type = SLV;
+			size = 31;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "Branch Valid";
+			description = "This bit contains validity information of recorded branch. 1 means that recorded address is valid. 0 means that the recorded address is invalid";
+			prefix = "BR_VALID";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+	};
+
+	reg {
+		name = "Branch Address FIFO";
+		description = "This FIFO holds the address of each recorded branch (Branch Trace Mode only)";
+		prefix = "BR_ADDR";
+
+		field {
+			name = "Branch Address";
+			-- description = "This bit contains validity information of recorded branch. 1 means that recorded address is valid. 0 means that the recorded address is invalid";
+			-- prefix = "A";
+			type = SLV;
+			size = 32;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+	};
+
+	-- fifo_reg {
+	-- 	size = 256;
+	-- 	direction = CORE_TO_BUS;
+	-- 	prefix = "af";
+	-- 	name = "Branch FIFO";
+	-- 	description = "This FIFO holds the addresses and timestamps of each recorded branch (Branch Trace Mode only)";
+	-- 	flags_bus = {FIFO_FULL, FIFO_EMPTY, FIFO_COUNT};
+	-- 	flags_dev = {FIFO_FULL, FIFO_EMPTY, FIFO_COUNT};
+		
+	-- 	field {
+	-- 		name = "Validity of recorded branch";
+	-- 		prefix = "br_valid";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 	};
+
+	-- 	field {
+	-- 		name = "Timestamp of recorded branch";
+	-- 		prefix = "br_timestamp";
+	-- 		type = SLV;
+	-- 		size = 31;
+	-- 	};
+
+	-- 	field {
+	-- 		name = "Address of recorded branch";
+	-- 		prefix = "br_addr";
+	-- 		type = SLV;
+	-- 		size = 32;
+	-- 	};
+
+	-- };
+};

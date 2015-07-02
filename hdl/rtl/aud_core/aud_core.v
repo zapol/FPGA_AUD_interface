@@ -1,4 +1,3 @@
-/*
 `include "aud_defs.vh"
 
 module aud_core (
@@ -21,7 +20,6 @@ module aud_core (
 	wb_adr_i,
 	wb_dat_i,
 	wb_dat_o,
-	wb_sel_i,
 	wb_cyc_i,
 	wb_stb_i,
 	wb_we_i,
@@ -77,6 +75,32 @@ aud_btm U_AudBtm(
 	.aud_nsync(btm_nsync)
 	);
 
+aud_wb_adapter U_AudWbAdapter(
+	.wb_adr_i(wb_adr_i),
+	.wb_dat_i(wb_dat_i),
+	.wb_dat_o(wb_dat_o),
+	.wb_cyc_i(wb_cyc_i),
+	.wb_stb_i(wb_stb_i),
+	.wb_we_i(wb_we_i),
+	.wb_ack_o(wb_ack_o),
+	.wb_stall_o(wb_stall_o),
+	.fifo_data_i(fifo_wb_i),
+	.fifo_data_o(fifo_wb_o),
+	.fifo_count_i(fifo_count_o),
+	.fifo_empty_i(fifo_empty_o),
+	.fifo_full_i(fifo_full_o),
+	.fifo_underrun_i(fifo_underrun_o),
+	.fifo_overflow_i(fifo_overflow_o),
+	.fifo_wr_o(fifo_wb_wr_o),
+	.fifo_rd_o(fifo_wb_rd_o),
+	.aud_reset_o(aud_reset),
+	.aud_enable_o(aud_enable),
+	.aud_mode_o(aud_mode)
+	);
+
+aud_fifo U_AudFifo(
+	)
+
 if(!aud_cr[AUD_CR_MD]) begin 	// RAM Monitor Mode
 	assign aud_sr[AUD_SR_IDLE] = aud_rmm_idle;
 	assign aud_data = rmm_data;
@@ -102,4 +126,3 @@ always @(posedge clk_sys_i) begin
 		
 	end
 end
-*/
