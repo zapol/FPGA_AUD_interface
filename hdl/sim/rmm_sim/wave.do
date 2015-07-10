@@ -13,7 +13,7 @@ add wave -noupdate -radix hexadecimal /rmm_tb/aud_data_reg
 add wave -noupdate /rmm_tb/aud_data_oe
 add wave -noupdate /rmm_tb/aud_ck
 add wave -noupdate /rmm_tb/err
-add wave -noupdate /rmm_tb/done
+add wave -noupdate /rmm_tb/idle
 add wave -noupdate /rmm_tb/aud_nsync
 add wave -noupdate /rmm_tb/U_AudRmm/rst
 #add wave -noupdate /rmm_tb/U_AudRmm/aud_data

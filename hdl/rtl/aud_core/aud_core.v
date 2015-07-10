@@ -1,128 +1,291 @@
 `include "aud_defs.vh"
 
+`define FIFO_ADDR_WIDTH 4
+`define FIFO_LEN    (1 << `FIFO_ADDR_WIDTH)
+
 module aud_core (
-	// system/FIFO clock 
-	clk_sys_i,
+    // system/FIFO clock 
+    clk_sys_i,
 
-	// AUD interface byte clock
-	clk_aud_i,
-	
-	rst_n_i,
+    // AUD interface byte clock
+    rst_n_i,
 
-	// AUD signals
-	aud_data,
-	aud_nrst,
-	aud_md,
-	aud_ck,
-	aud_nsync,
+    // AUD signals
+    aud_data,
+    aud_nrst,
+    aud_md,
+    aud_ck,
+    aud_nsync,
 
-	// Host control registers (WBv4 pipelined, clk_sys_i clock domain)
-	wb_adr_i,
-	wb_dat_i,
-	wb_dat_o,
-	wb_cyc_i,
-	wb_stb_i,
-	wb_we_i,
-	wb_ack_o,
-	wb_stall_o
+    // Host wishbone signals
+    wb_adr_i,
+    wb_dat_i,
+    wb_dat_o,
+    wb_stb_i,
+    wb_we_i,
+    wb_ack_o
 );
 
-parameter g_aud_fifo_len = 16;
-
-input clk_sys_i,clk_aud_i,rst_n_i;
+input clk_sys_i,rst_n_i;
 
 inout [3:0] aud_data;
-output aud_nrst, aud_md, aud_nsyns_o;
+output aud_nrst, aud_md, aud_nsync;
 inout aud_ck;
 
 // Host control registers (WBv4 pipelined, clk_sys_i clock domain)
-input	[31:0]	wb_adr_i;
-input	[31:0]	wb_dat_i;
-output	[31:0]	wb_dat_o;
-input	[3:0]	wb_sel_i;
-input			wb_cyc_i, wb_stb_i, wb_we_i;
-output			wb_ack_o, wb_stall_o;
+input   [31:0]  wb_adr_i;
+input   [31:0]  wb_dat_i;
+output reg [31:0]  wb_dat_o;
+// input   [3:0]   wb_sel_i;
+input           /*wb_cyc_i, */wb_stb_i, wb_we_i;
+output          wb_ack_o/*, wb_stall_o*/;
 
-wire clk_aud_rmm;
-wire clk_aud_btm;
+wire aud_rmm_nsync;
+wire aud_btm_nsync;
+wire [3:0] aud_rmm_data, aud_btm_data;
+wire rmm_err;
+wire [31:0] rmm_data_o;
+reg [31:0] rmm_data_i;
+wire [31:0] btm_addr_o;
 
-reg		[31:0]	aud_cr;
-wire	[31:0]	aud_sr;
-reg		[31:0]	aud_dr;
-reg		[31:0]	aud_addr;
-reg		[31:0]	aud_len;
+reg     [31:0]  rmm_addr_reg;
+reg     [31:0]  rmm_len_reg;
+reg aud_md_reg, aud_md_tmp_reg, aud_re_reg, aud_we_reg, aud_rst_reg;
+wire aud_idle;
+reg rmm_we_reg, rmm_re_reg;
+reg rmm_err_reg;
+reg wb_ack_reg;
+reg     [31:0]  wb_adr_reg;
+
+reg btm_fovf, btm_fund, btmfifo_re_reg;
+reg rmm_fovf, rmm_fund, rmmfifo_we_reg, rmmfifo_re_reg;
+wire btm_ff, btm_fe, btm_rst;
+wire rmm_ff, rmm_fe, rmm_rst;
+wire [31:0] rmmfifo_dat_o;
+wire [63:0] btmfifo_dat_o;
+reg [31:0] rmmfifo_dat_i;
+wire [63:0] btmfifo_dat_i;
+reg [30:0] timer_reg;
+
+wire [`FIFO_ADDR_WIDTH:0]  btmfifo_count_o, rmmfifo_count_o;
 
 aud_rmm U_AudRmm(
-	.en(aud_cr[AUD_CR_MD],
-	.start_addr_i(aud_addr),
-	.len(aud_len),
-	.idle(aud_rmm_idle),
-	.clk_sys_i(clk_sys_i),
-	.clk_aud_i(clk_aud_i),
-	.rst_n_i(rst_n_i),
-	.aud_data(rmm_data),
-	.aud_ck(rmm_ck),
-	.aud_nsync(rmm_nsync)
-	);
+    .clk_i(clk_sys_i),
+    .rst_i(rmm_rst),
+    .addr_i(rmm_addr_reg),
+    .data_i(rmm_data_i),
+    .data_o(rmm_data_o),
+    .size_i(2'b11),
+    .we_i(rmm_we_reg),
+    .re_i(rmm_re_reg),
+    .err_o(rmm_err),
+    .idle_o(rmm_idle),
+    .aud_data(aud_rmm_data),
+    .aud_nsync_o(aud_rmm_nsync)
+    );
 
 aud_btm U_AudBtm(
-	.br_addr(btm_br_addr),
-	.addr_valid(btm_addr_valid),
-	.oe(btm_oe),
-	.rst(!rst_n_i),
-	.aud_data(btm_data),
-	.aud_ck(btm_ck),
-	.aud_nsync(btm_nsync)
-	);
+    .rst(btm_rst),
+    .br_addr(btm_addr_o),
+    .oe(btm_oe_o),
+    .addr_valid(btm_addrvalid_o),
+    .buserror(btm_buserror_o),
+    .aud_data(aud_btm_data),
+    .aud_ck(aud_ck),
+    .aud_nsync(aud_btm_nsync)
+    );
 
-aud_wb_adapter U_AudWbAdapter(
-	.wb_adr_i(wb_adr_i),
-	.wb_dat_i(wb_dat_i),
-	.wb_dat_o(wb_dat_o),
-	.wb_cyc_i(wb_cyc_i),
-	.wb_stb_i(wb_stb_i),
-	.wb_we_i(wb_we_i),
-	.wb_ack_o(wb_ack_o),
-	.wb_stall_o(wb_stall_o),
-	.fifo_data_i(fifo_wb_i),
-	.fifo_data_o(fifo_wb_o),
-	.fifo_count_i(fifo_count_o),
-	.fifo_empty_i(fifo_empty_o),
-	.fifo_full_i(fifo_full_o),
-	.fifo_underrun_i(fifo_underrun_o),
-	.fifo_overflow_i(fifo_overflow_o),
-	.fifo_wr_o(fifo_wb_wr_o),
-	.fifo_rd_o(fifo_wb_rd_o),
-	.aud_reset_o(aud_reset),
-	.aud_enable_o(aud_enable),
-	.aud_mode_o(aud_mode)
-	);
+afifo #(.DATA_WIDTH(64),.ADDRESS_WIDTH(`FIFO_ADDR_WIDTH)) U_BtmFifo(
+    .rst(aud_rst),
+    .dat_i(btmfifo_dat_i),
+    .we_i(btm_oe_o),
+    .re_i(btmfifo_re_reg),
+    .dat_o(btmfifo_dat_o),
+    .count_o(btmfifo_count_o)
+    );
 
-aud_fifo U_AudFifo(
-	)
+afifo #(.DATA_WIDTH(32),.ADDRESS_WIDTH(`FIFO_ADDR_WIDTH)) U_RmmFifo(
+    .rst(aud_rst),
+    .dat_i(rmmfifo_dat_i),
+    .we_i(rmmfifo_we_reg),
+    .re_i(rmmfifo_re_reg),
+    .dat_o(rmmfifo_dat_o),
+    .count_o(rmmfifo_count_o)
+    );
 
-if(!aud_cr[AUD_CR_MD]) begin 	// RAM Monitor Mode
-	assign aud_sr[AUD_SR_IDLE] = aud_rmm_idle;
-	assign aud_data = rmm_data;
-	assign aud_nrst = rmm_nrst;
-	assign aud_ck = rmm_ck;
-	assign aud_nsync = rmm_nsync;
-end else begin 					// Branch Trace Mode
-	assign aud_sr[AUD_SR_IDLE] = aud_btm_idle;
-	assign aud_data = btm_data;
-	assign aud_nrst = btm_nrst;
-	assign aud_ck = btm_ck;
-	assign aud_nsync = btm_nsync;
+assign aud_idle     = aud_md_reg ? (rmm_idle | !aud_rst_reg)    : (!aud_rst_reg);
+assign aud_data     = aud_md_reg ? aud_rmm_data                 : aud_btm_data;
+assign aud_ck       = aud_md_reg ? clk_sys_i                    : 1'bZ;
+assign aud_nsync    = aud_md_reg ? aud_rmm_nsync                : aud_btm_nsync;
+
+assign aud_rst = aud_rst_reg | !rst_n_i;
+assign aud_nrst = !aud_rst;
+assign rmm_rst = aud_rst | !aud_md;
+assign btm_rst = aud_rst | aud_md;
+assign aud_md = aud_md_reg;
+assign wb_ack_o = wb_ack_reg;
+
+// Reset all read/write requests to afifos
+always@(negedge clk_sys_i) begin
+    rmmfifo_we_reg <= 0;
+    rmmfifo_re_reg <= 0;
+    btmfifo_re_reg <= 0;
 end
 
-assign aud_md = aud_cr[AUD_CR_MD];
+// Wishbone transfers
+always@(posedge clk_sys_i)
+    if(!rst_n_i) begin
+        wb_ack_reg      <= 0;
+        aud_md_reg      <= 0;
+        aud_md_tmp_reg  <= 0;
+        aud_rst_reg     <= 1;
+        aud_re_reg      <= 0;
+        aud_we_reg      <= 0;
+        rmm_err_reg     <= 0;
+        rmm_addr_reg    <= 0;
+        rmm_len_reg     <= 0;
+        wb_dat_o        <= 0;
+        rmmfifo_dat_i   <= 0;
+    end else begin
+        wb_ack_reg <= wb_stb_i;
+        wb_adr_reg <= wb_adr_i;
 
+        if( wb_stb_i || wb_ack_reg) begin
+            // Write cycles
+            if(wb_we_i && wb_stb_i) begin
+                case (wb_adr_i)
+                    `ADDR_REG_CSR: begin
+                        aud_md_tmp_reg <= wb_dat_i[`REG_CSR_MD_OFFSET];
+                        aud_we_reg <= wb_dat_i[`REG_CSR_WE_OFFSET];
+                        aud_re_reg <= wb_dat_i[`REG_CSR_RE_OFFSET];
+                        aud_rst_reg <= wb_dat_i[`REG_CSR_RST_OFFSET];
+                    end
+                    `ADDR_REG_RMM_ADDR: begin
+                        rmm_addr_reg[31:0] <= wb_dat_i[31:0];
+                    end
+                    `ADDR_REG_RMM_LEN: begin
+                        rmm_len_reg[31:0] <= wb_dat_i[31:0];
+                    end
+                    `ADDR_REG_RMM_DATA: begin
+                        rmmfifo_dat_i[31:0] <= wb_dat_i[31:0];
+                        rmmfifo_we_reg <= 1;
+                    end
+                endcase
+            // Read cycles
+            end else if (!wb_we_i && wb_ack_reg) begin
+                case (wb_adr_reg)
+                    `ADDR_REG_CSR: begin
+                        wb_dat_o[`REG_CSR_MD_OFFSET] <= aud_md_reg;
+                        wb_dat_o[`REG_CSR_WE_OFFSET] <= 0;
+                        wb_dat_o[`REG_CSR_RE_OFFSET] <= 0;
+                        wb_dat_o[`REG_CSR_RST_OFFSET] <= aud_rst_reg;
+                        wb_dat_o[`REG_CSR_IDLE_OFFSET] <= aud_idle;
+                        wb_dat_o[`REG_CSR_ERR_OFFSET] <= rmm_err_reg;
+                        wb_dat_o[`REG_CSR_BTM_FF_OFFSET] <= btm_ff;
+                        wb_dat_o[`REG_CSR_BTM_FOVF_OFFSET] <= btm_fovf;
+                        wb_dat_o[`REG_CSR_BTM_FE_OFFSET] <= btm_fe;
+                        wb_dat_o[`REG_CSR_BTM_FUND_OFFSET] <= btm_fund;
+                        wb_dat_o[`REG_CSR_RMM_FF_OFFSET] <= rmm_ff;
+                        wb_dat_o[`REG_CSR_RMM_FOVF_OFFSET] <= rmm_fovf;
+                        wb_dat_o[`REG_CSR_RMM_FE_OFFSET] <= rmm_fe;
+                        wb_dat_o[`REG_CSR_RMM_FUND_OFFSET] <= rmm_fund;
+                        wb_dat_o[`REG_CSR_BTM_FC_OFFSET+7:`REG_CSR_BTM_FC_OFFSET] <= btmfifo_count_o;
+                        wb_dat_o[`REG_CSR_RMM_FC_OFFSET+7:`REG_CSR_RMM_FC_OFFSET] <= rmmfifo_count_o;
+                    end
+                    `ADDR_REG_BTF: begin
+                        wb_dat_o[31:0] <= btmfifo_dat_o [31:0];
+                    end
+                    `ADDR_REG_BAF: begin
+                        wb_dat_o[31:0] <= btmfifo_dat_o[63:32];
+                        btmfifo_re_reg <= 1;
+                    end
+                    `ADDR_REG_RMM_ADDR: begin
+                        wb_dat_o[31:0] <= rmm_addr_reg;
+                    end
+                    `ADDR_REG_RMM_LEN: begin
+                        wb_dat_o[31:0] <= rmm_len_reg;
+                    end
+                    `ADDR_REG_RMM_DATA: begin
+                        wb_dat_o[31:0] <= rmmfifo_dat_o;
+                        rmmfifo_re_reg <= 1;
+                    end
+                endcase
+            end
+        end
+    end // if (!rst_n_i)
+
+// RMM logic
 always @(posedge clk_sys_i) begin
-	if (!rst_n_i) begin
-		// reset
-		
-	end
-	else begin
-		
-	end
+    if ( rmm_idle ) begin
+        if( aud_we_reg && !rmm_ff ) begin
+            rmm_we_reg <= 1;
+            rmmfifo_re_reg <= 1;
+            rmm_data_i <= rmmfifo_dat_o;
+            rmm_addr_reg <= rmm_addr_reg+4;
+            rmm_len_reg <= rmm_len_reg-1;
+        end else if ( aud_re_reg && !rmm_fe ) begin
+            rmm_re_reg <= 1;
+            rmmfifo_dat_i <= rmm_data_o;
+            rmmfifo_we_reg <= 1;
+            rmm_addr_reg <= rmm_addr_reg+4;
+            rmm_len_reg <= rmm_len_reg-1;            
+        end
+    end else begin
+        rmm_we_reg <= 0;
+        rmm_re_reg <= 0;
+    end
 end
+
+// BTM logic
+/*
+    .rst(btm_rst),
+    .br_addr(btm_addr_o),           // TODO
+    .oe(btm_oe_o),                  // TODO
+    .addr_valid(btm_addrvalid_o),   // TODO
+    .buserror(btm_buserror_o),      // TODO
+*/
+always @(posedge clk_sys_i) begin
+    if (btm_rst) begin
+        timer_reg <= 0;
+    end else begin
+        timer_reg <= timer_reg + 1;
+    end
+end
+
+assign btmfifo_dat_i[63:32] = btm_addr_o;
+assign btmfifo_dat_i[31] = btm_addrvalid_o;
+assign btmfifo_dat_i[30:0] = timer_reg[30:0];
+
+// FIFOs Logic
+assign rmm_ff = (rmmfifo_count_o==`FIFO_LEN);
+assign btm_ff = (btmfifo_count_o==`FIFO_LEN);
+assign rmm_fe = (rmmfifo_count_o==0);
+assign btm_fe = (btmfifo_count_o==0);
+always@(posedge rmmfifo_we_reg)
+    if(rmm_ff) rmm_fovf <= 1;
+always@(posedge rmmfifo_re_reg)
+    if(rmm_fe) rmm_fund <= 1;
+always@(posedge btm_oe_o)
+    if(btm_ff) btm_fovf <= 1;
+always@(posedge btmfifo_re_reg)
+    if(btm_fe) btm_fund <= 1;
+always@(posedge rmm_rst) begin
+    rmm_fovf <= 0;
+    rmm_fund <= 0;
+end
+always@(posedge btm_rst) begin
+    btm_fovf <= 0;
+    btm_fund <= 0;
+end
+
+
+always@(posedge clk_sys_i) begin
+    if(aud_rst_reg) begin
+        aud_md_reg <= aud_md_tmp_reg;
+    end else begin
+        if(rmm_err) rmm_err_reg <= 1;
+    end
+end
+
+always@(negedge rmm_idle) rmm_err_reg <= 0;
+endmodule

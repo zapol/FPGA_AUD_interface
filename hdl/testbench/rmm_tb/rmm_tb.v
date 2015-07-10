@@ -25,7 +25,7 @@ aud_rmm U_AudRmm(
 	.we			(we),
 	.re			(re),
 	.err		(err),
-	.done		(done),
+	.idle		(idle),
 	.aud_data	(aud_data),
 	.aud_ck		(aud_ck),
 	.aud_nsync	(aud_nsync)

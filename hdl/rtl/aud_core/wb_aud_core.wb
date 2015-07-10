@@ -2,14 +2,14 @@
 
 peripheral {
 	name ="AUD core";
-	prefix="aud";
+	prefix="REG";
 	hdl_entity="AUD_core";
 	
 
 	reg {
 		name = "Control/Status Register";
 		description = "A register controlling the behavior of AUD peripheral.";
-		prefix = "CR";
+		prefix = "CSR";
 
 		field {
 			name = "AUD Mode";
@@ -21,12 +21,21 @@ peripheral {
 			access_dev = READ_ONLY;
 		};
 		field {
-			name = "Enable";
-			description = "Enable data transmission/collection will be automatically reset when transaction is finished (rising edge of AUD_SR_IDLE)";
-			prefix = "EN";
+			name = "Write Enable";
+			description = "Enable data write operation (RMM mode only). This bit is automatically reset after operation completes.";
+			prefix = "WE";
 			type = SLV;
 			size = 1;
-			access_bus = READ_WRITE;
+			access_bus = WRITE_ONLY;
+			access_dev = READ_ONLY;
+		};
+		field {
+			name = "Read Enable";
+			description = "Enable data write operation (RMM mode only). This bit is automatically reset after operation completes.";
+			prefix = "RE";
+			type = SLV;
+			size = 1;
+			access_bus = WRITE_ONLY;
 			access_dev = READ_ONLY;
 		};
 		field {
@@ -38,30 +47,41 @@ peripheral {
 			access_bus = READ_WRITE;
 			access_dev = READ_ONLY;
 		};
+
 		field {
 			name = "IDLE";
 			description = "Peripheral finished operation and entered idle state";
 			prefix = "IDLE";
 			type = SLV;
-			align = 8;
 			size = 1;
 			access_bus = READ_ONLY;
 			access_dev = WRITE_ONLY;
 		};
+
+		field {
+			name = "ERR";
+			description = "Last operation failed";
+			prefix = "ERR";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+
 		field {
 			name = "FIFO_FULL";
-			description = "AUD FIFO full";
-			prefix = "FF";
+			description = "BTM FIFO full";
+			prefix = "BTM_FF";
+			align = 4;
 			type = SLV;
-			align = 8;
 			size = 1;
 			access_bus = READ_ONLY;
 			access_dev = WRITE_ONLY;
 		};
 		field {
 			name = "FIFO_OVERFLOW";
-			description = "AUD FIFO overflow. This bit will remain until peripheral reset";
-			prefix = "FOVF";
+			description = "BTM FIFO overflow. This bit will remain until peripheral reset";
+			prefix = "BTM_FOVF";
 			type = SLV;
 			size = 1;
 			access_bus = READ_ONLY;
@@ -69,8 +89,8 @@ peripheral {
 		};
 		field {
 			name = "FIFO_EMPTY";
-			description = "AUD FIFO empty";
-			prefix = "FE";
+			description = "BTM FIFO empty";
+			prefix = "BTM_FE";
 			type = SLV;
 			size = 1;
 			access_bus = READ_ONLY;
@@ -78,17 +98,65 @@ peripheral {
 		};
 		field {
 			name = "FIFO_UNDERRUN";
-			description = "AUD FIFO underrun. This bit will remain until peripheral reset";
-			prefix = "FUND";
+			description = "BTM FIFO underrun. This bit will remain until peripheral reset";
+			prefix = "BTM_FUND";
 			type = SLV;
 			size = 1;
 			access_bus = READ_ONLY;
 			access_dev = WRITE_ONLY;
 		};
 		field {
+			name = "FIFO_FULL";
+			description = "RMM FIFO full";
+			prefix = "RMM_FF";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_OVERFLOW";
+			description = "RMM FIFO overflow. This bit will remain until peripheral reset";
+			prefix = "RMM_FOVF";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_EMPTY";
+			description = "RMM FIFO empty";
+			prefix = "RMM_FE";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+		field {
+			name = "FIFO_UNDERRUN";
+			description = "RMM FIFO underrun. This bit will remain until peripheral reset";
+			prefix = "RMM_FUND";
+			type = SLV;
+			size = 1;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+
+		field {
 			name = "FIFO_COUNT";
-			description = "Number of elements in AUD FIFO";
-			prefix = "FC";
+			description = "Number of elements in BTM FIFO";
+			prefix = "BTM_FC";
+			align = 8;
+			type = SLV;
+			size = 8;
+			access_bus = READ_ONLY;
+			access_dev = WRITE_ONLY;
+		};
+
+		field {
+			name = "FIFO_COUNT";
+			description = "Number of elements in RMM FIFO";
+			prefix = "RMM_FC";
 			align = 8;
 			type = SLV;
 			size = 8;
@@ -96,6 +164,59 @@ peripheral {
 			access_dev = WRITE_ONLY;
 		};
 	};
+
+	-- reg {
+	-- 	name = "BTM FIFO Status Register";
+	-- 	description = "A register containing the status of BTM FIFO";
+	-- 	prefix = "BTM_FIFO";
+
+	-- 	field {
+	-- 		name = "FIFO_FULL";
+	-- 		description = "BTM FIFO full";
+	-- 		prefix = "FF";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_OVERFLOW";
+	-- 		description = "BTM FIFO overflow. This bit will remain until peripheral reset";
+	-- 		prefix = "FOVF";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_EMPTY";
+	-- 		description = "BTM FIFO empty";
+	-- 		prefix = "FE";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_UNDERRUN";
+	-- 		description = "BTM FIFO underrun. This bit will remain until peripheral reset";
+	-- 		prefix = "FUND";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_COUNT";
+	-- 		description = "Number of elements in BTM FIFO";
+	-- 		prefix = "FC";
+	-- 		align = 8;
+	-- 		type = SLV;
+	-- 		size = 8;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- };
 
 	reg {
 		name = "Branch Timestamp FIFO";
@@ -125,7 +246,7 @@ peripheral {
 	reg {
 		name = "Branch Address FIFO";
 		description = "This FIFO holds the address of each recorded branch (Branch Trace Mode only)";
-		prefix = "BR_ADDR";
+		prefix = "BAF";
 
 		field {
 			name = "Branch Address";
@@ -135,6 +256,101 @@ peripheral {
 			size = 32;
 			access_bus = READ_ONLY;
 			access_dev = WRITE_ONLY;
+		};
+	};
+
+	reg {
+		name = "RMM address";
+		description = "This register contains an address in memory where read/write operation should begin";
+		prefix = "RMM_ADDR";
+
+		field {
+			name = "RMM Address";
+			type = SLV;
+			size = 32;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
+		};
+	};
+	reg {
+		name = "RMM length";
+		description = "This register contains length of data to be read/written.";
+		prefix = "RMM_LEN";
+
+		field {
+			name = "RMM Address";
+			type = SLV;
+			size = 32;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
+		};
+	};
+
+	-- reg {
+	-- 	name = "RMM FIFO Status Register";
+	-- 	description = "A register containing the status of RMM FIFO";
+	-- 	prefix = "RMM_FIFO";
+	-- 	field {
+	-- 		name = "FIFO_FULL";
+	-- 		description = "RMM FIFO full";
+	-- 		prefix = "FF";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_OVERFLOW";
+	-- 		description = "RMM FIFO overflow. This bit will remain until peripheral reset";
+	-- 		prefix = "FOVF";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_EMPTY";
+	-- 		description = "RMM FIFO empty";
+	-- 		prefix = "FE";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_UNDERRUN";
+	-- 		description = "RMM FIFO underrun. This bit will remain until peripheral reset";
+	-- 		prefix = "FUND";
+	-- 		type = SLV;
+	-- 		size = 1;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- 	field {
+	-- 		name = "FIFO_COUNT";
+	-- 		description = "Number of elements in RMM FIFO";
+	-- 		prefix = "FC";
+	-- 		align = 8;
+	-- 		type = SLV;
+	-- 		size = 8;
+	-- 		access_bus = READ_ONLY;
+	-- 		access_dev = WRITE_ONLY;
+	-- 	};
+	-- };
+
+	reg {
+		name = "RMM Data FIFO";
+		description = "This FIFO holds the data to be read/written. (RMM mode only)";
+		prefix = "RMM_DATA";
+
+		field {
+			name = "RMM Data";
+			-- description = "This bit contains validity information of recorded branch. 1 means that recorded address is valid. 0 means that the recorded address is invalid";
+			-- prefix = "A";
+			type = SLV;
+			size = 32;
+			access_bus = READ_WRITE;
+			access_dev = READ_ONLY;
 		};
 	};
 

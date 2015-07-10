@@ -19,6 +19,7 @@ input [3:0] aud_data;
 input aud_ck;
 input aud_nsync;
 
+wire [31:0] br_addr;
 reg [31:0] last_good_addr;
 reg [31:0] rcv_addr;
 reg [31:0] br_addr_reg;
@@ -43,6 +44,7 @@ always @(negedge aud_ck or posedge rst) begin
 		mode 			<= 0;
 		rcv_cnt			<= 0;
 		oe_reg 			<= 0;
+		oe_reg_d		<= 0;
 		addr_valid_reg	<= 0;
 		buserror_reg	<= 0;
 	end
