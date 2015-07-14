@@ -40,6 +40,15 @@ reg [2:0] counter;
 
 assign aud_data = aud_data_oe ? aud_data_reg : 4'hZ;
 
+always @(posedge we_i or re_i or posedge clk_i) begin 
+	case (state)
+		`IDLE: if(we_i | re_i) idle_o <= 0;
+		`READ_DONE: idle_o <= 1;
+		`WRITE_DONE: idle_o <= 1;
+		`READ_READY: if(err_o) idle_o <= 1;
+	endcase
+end
+
 always @(posedge clk_i or posedge rst_i) begin
 	if (rst_i) begin
 		state <= `IDLE;
@@ -59,7 +68,7 @@ always @(posedge clk_i or posedge rst_i) begin
 			`IDLE: begin
 				err_o <= 0;
 				if (we_i) begin
-					idle_o <= 0;
+					// idle_o <= 0;
 					aud_data_oe <= 1;
 					aud_data_reg <= 4'b0000;
 					data_reg <= data_i;
@@ -68,7 +77,7 @@ always @(posedge clk_i or posedge rst_i) begin
 					aud_nsync_o <= 0;
 					state <= `WRITE_CMD;
 				end else if (re_i) begin
-					idle_o <= 0;
+					// idle_o <= 0;
 					aud_data_oe <= 1;
 					aud_data_reg <= 4'b0000;
 					addr_reg <= addr_i;
@@ -76,7 +85,6 @@ always @(posedge clk_i or posedge rst_i) begin
 					aud_nsync_o <= 0;
 					state <= `READ_CMD;
 				end else begin
-					idle_o <= 1;
 					aud_data_oe <= 0;
 					aud_nsync_o <= 1;
 				end
@@ -160,7 +168,7 @@ always @(posedge clk_i or posedge rst_i) begin
 			end
 			`WRITE_DONE: begin
 				aud_nsync_o <= 1;
-				idle_o <= 1;
+				// idle_o <= 1;
 				state <= `IDLE;
 			end
 			`READ_CMD: begin
@@ -208,11 +216,11 @@ always @(posedge clk_i or posedge rst_i) begin
 			end
 			`READ_READY: begin
 				aud_nsync_o <= 1;
-				if(err_o)
-					idle_o <= 1;
+				// if(err_o)
+				// 	idle_o <= 1;
 			end
 			`READ_DONE: begin
-				idle_o <= 1;
+				// idle_o <= 1;
 				state <= `IDLE;
 			end
 		endcase
@@ -282,7 +290,8 @@ always @(negedge clk_i ) begin
 				end
 			endcase
 			if(counter == (1<<size_reg)-1) begin
-				data_o <= data_reg;
+				data_o[27:0] <= data_reg[27:0];
+				data_o[31:28] <= aud_data[3:0];	// Ugly hack :/
 				state <= `READ_DONE;
 			end else begin
 				counter <= counter+1;

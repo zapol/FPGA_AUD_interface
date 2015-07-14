@@ -14,4 +14,4 @@ log -r /*
 # add wave *
 do wave.do
 
-run 1000 ns
+run 3000 ns

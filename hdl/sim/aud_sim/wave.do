@@ -36,15 +36,15 @@ add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_o
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_rmm_nsync
 #add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_btm_ck
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_btm_nsync
-add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/aud_rmm_data
-add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/aud_btm_data
+#add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/aud_rmm_data
+#add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/aud_btm_data
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_err
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/rmm_data_i
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/rmm_data_o
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/btm_addr_o
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/rmm_addr_reg
 add wave -noupdate -group AUD -radix unsigned /aud_tb/U_AudCore/rmm_len_reg
-add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_md_reg
+#add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_md_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_md_tmp_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_re_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_we_reg
@@ -53,7 +53,7 @@ add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_idle
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_we_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_re_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_err_reg
-add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg
+#add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg
 #add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg_d
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/wb_adr_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fovf
@@ -76,6 +76,7 @@ add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/btmfifo_dat_i
 add wave -noupdate -group AUD -radix unsigned /aud_tb/U_AudCore/timer_reg
 add wave -noupdate -group AUD -radix unsigned /aud_tb/U_AudCore/btmfifo_count_o
 add wave -noupdate -group AUD -radix unsigned /aud_tb/U_AudCore/rmmfifo_count_o
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_idle_prev
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_idle
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_oe_o
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_addrvalid_o
