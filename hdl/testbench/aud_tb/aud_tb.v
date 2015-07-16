@@ -72,37 +72,100 @@ task wb_write;
 	end
 endtask
 
-task wb_read;
+task automatic wb_read_verify;
 	input [31:0] addr;
-	@(posedge clk_sys) begin
-		wb_adr_o <= addr;
-		wb_we_o <= 0;
-		wb_stb_o <= 1;
+	input [31:0] data;
+	begin
+	$display ("Read started @ %d", $time);
+		@(posedge clk_sys) begin
+			wb_adr_o <= addr;
+			wb_we_o <= 0;
+			wb_stb_o <= 1;
+		end
+		@(posedge clk_sys)
+		@(posedge clk_sys)
+			if(data != wb_dat_i) $display( "WB read failed @ %d => expected %8h, got %8h", $time, data, wb_dat_i );
 	end
 endtask
 
-task aud_write;
+task automatic wb_read;
+	input [31:0] addr;
+	input verbose;
+	begin
+	$display ("Read started @ %d", $time);
+		@(posedge clk_sys) begin
+			wb_adr_o <= addr;
+			wb_we_o <= 0;
+			wb_stb_o <= 1;
+		end
+		@(posedge clk_sys)
+		@(posedge clk_sys)
+			if(verbose) $display( "WB read  @ %d =>  got %8h", $time, wb_dat_i );
+	end
+endtask
+
+task aud_write_sys;
+	input [3:0] data;
+	begin
+		@(posedge clk_sys) aud_data_o <= data;
+	end
+endtask
+
+task aud_write_aud;
+	input [3:0] data;
+	begin
+		@(posedge aud_ck) aud_data_o <= data;
+	end
+endtask
+
+task aud_rmm_write;
 	input [31:0] data;
 	begin
 	$display ("AUD sending starts @ %d", $time);
-	@(posedge clk_sys) begin
-		aud_data_oe <= 1;
-		aud_data_o <= 4'h0;
-	end
-	@(posedge clk_sys)
-	@(posedge clk_sys) aud_data_o <= 4'h1;
-	@(posedge clk_sys)
-	@(posedge clk_sys) aud_data_o <= data[3:0];
-	@(posedge clk_sys) aud_data_o <= data[7:4];
-	@(posedge clk_sys) aud_data_o <= data[11:8];
-	@(posedge clk_sys) aud_data_o <= data[15:12];
-	@(posedge clk_sys) aud_data_o <= data[19:16];
-	@(posedge clk_sys) aud_data_o <= data[23:20];
-	@(posedge clk_sys) aud_data_o <= data[27:24];
-	@(posedge clk_sys) aud_data_o <= data[31:28];
+
+	aud_write_sys(4'h0);
+	aud_data_oe <= 1;
+
+	aud_write_sys(4'h0);
+	aud_write_sys(4'h1);
+	aud_write_sys(4'h1);
+	aud_write_sys(data[3:0]);
+	aud_write_sys(data[7:4]);
+	aud_write_sys(data[11:8]);
+	aud_write_sys(data[15:12]);
+	aud_write_sys(data[19:16]);
+	aud_write_sys(data[23:20]);
+	aud_write_sys(data[27:24]);
+	aud_write_sys(data[31:28]);
 	@(posedge clk_sys) aud_data_oe <= 0;
 	if( U_AudCore.rmm_data_o != data)
 		$display ("RMM data received incorrectly @ %d => expected %8h, got %8h", $time, data, U_AudCore.rmm_data_o);
+	end
+endtask
+
+task aud_btm_write;
+	input [31:0] data;
+	input [1:0] len;
+	input [2:0] real_len;
+
+	begin
+	$display ("AUD BTM sending starts @ %d", $time);
+
+
+	aud_write_aud(4'b0011);
+	aud_write_aud(4'b0011);
+	aud_write_aud({2'b10,len});
+
+	if(real_len>=0) aud_write_aud(data[3:0]);
+	aud_nsync_o <= 0;
+	if(real_len>=1) aud_write_aud(data[7:4]);
+	if(real_len>=2) aud_write_aud(data[11:8]);
+	if(real_len>=3) aud_write_aud(data[15:12]);
+	if(real_len>=4) aud_write_aud(data[19:16]);
+	if(real_len>=5) aud_write_aud(data[23:20]);
+	if(real_len>=6) aud_write_aud(data[27:24]);
+	if(real_len>=7) aud_write_aud(data[31:28]);
+	@(posedge aud_ck) aud_nsync_o <= 1;
 	end
 endtask
 
@@ -144,6 +207,7 @@ task wb_endcycle;
 	end
 endtask
 
+
 initial begin
 
 	// RMM write test
@@ -172,47 +236,63 @@ initial begin
 	#1 wb_write(`ADDR_REG_RMM_LEN, 32'D4);
 	#1 wb_write(`ADDR_REG_CSR, 32'H00000005);
 	#1 wb_endcycle();
-	#130 aud_write(32'h01234567);
-	#130 aud_write(32'h89abcdef);
-	#130 aud_write(32'hDEADBEEF);
-	#130 aud_write(32'hbeefdeaf);
+	#130 aud_rmm_write(32'h01234567);
+	#130 aud_rmm_write(32'h89abcdef);
+	#130 aud_rmm_write(32'hDEADBEEF);
+	#130 aud_rmm_write(32'hbeefdeaf);
+
+	fork
+	#10 wb_read_verify(`ADDR_REG_RMM_DATA,32'h01234567);
+	#20 wb_read_verify(`ADDR_REG_RMM_DATA,32'h89abcdef);
+	#30 wb_read_verify(`ADDR_REG_RMM_DATA,32'hDEADBEEF);
+	#40 wb_read_verify(`ADDR_REG_RMM_DATA,32'hbeefdeaf);
+	#50	wb_endcycle();
+	join
+
+	// BTM test
+	#1 wb_write(`ADDR_REG_CSR, 32'H00000008);
+	#1 wb_write(`ADDR_REG_CSR, 32'H00000000);
+	aud_ck_oe <= 1;
+	aud_nsync_oe <= 1;
+	aud_data_o <= 4'b0011;
+	aud_data_oe <= 1;
+	aud_nsync_o <= 1;
+	#1 wb_endcycle();
+
+	aud_btm_write(32'h01234567, 2'b11, 3'h7);
+	aud_btm_write(32'h89abcdef, 2'b11, 3'h6);
+	aud_btm_write(32'hDEADBEEF, 2'b10, 3'h3);
+	aud_btm_write(32'hbeefdeaf, 2'b11, 3'h3);
+
+	#20
+	fork
+	#10 wb_read(`ADDR_REG_BTF,1);
+	#20 wb_read_verify(`ADDR_REG_BAF,32'h01234567);
+	#30 wb_read(`ADDR_REG_BTF,1);
+	#40 wb_read_verify(`ADDR_REG_BAF,32'h09abcdef);
+	#50 wb_read(`ADDR_REG_BTF,1);
+	#60 wb_read_verify(`ADDR_REG_BAF,32'h0123BEEF);
+	#70 wb_read(`ADDR_REG_BTF,1);
+	#80 wb_read_verify(`ADDR_REG_BAF,32'h0123deaf);
+	#90	wb_endcycle();
+	join
+	// aud_write_aud(4'b0011);
+	// aud_data_oe <= 1;
+	// aud_write_aud(4'b0011);
+	// aud_write_aud(4'b0011);
+	// aud_write_aud(4'b0011);
+
+	// aud_write_aud(4'b1011);
+	// aud_nsync_o <= 0;
+	// aud_write_aud(4'h1);
+	// aud_write_aud(4'h2);
+	// aud_write_aud(4'h3);
+	// aud_write_aud(4'h4);
+	// aud_write_aud(4'h5);
+	// aud_write_aud(4'h6);
+	// aud_write_aud(4'h7);
+	// aud_write_aud(4'h8);
 
 end
 
-// initial begin
-
-// 	// RMM write test
-// 	#140
-	
-// 	#190
-// 	aud_data_oe <= 1;
-// 	aud_data_o <= 4'b0000;
-// 	#20	aud_data_o <= 4'b0001;
-// 	#20 aud_data_oe <= 0;
-
-// 	#190
-// 	aud_data_oe <= 1;
-// 	aud_data_o <= 4'b0000;
-// 	#20	aud_data_o <= 4'b0001;
-// 	#20 aud_data_oe <= 0;
-
-// 	#190
-// 	aud_data_oe <= 1;
-// 	aud_data_o <= 4'b0000;
-// 	#20	aud_data_o <= 4'b0001;
-// 	#20 aud_data_oe <= 0;
-
-// 	#190
-// 	aud_data_oe <= 1;
-// 	aud_data_o <= 4'b0000;
-// 	#20	aud_data_o <= 4'b0001;
-// 	#20 aud_data_oe <= 0;
-
-// 	// RMM read test
-// 	#300 aud_write(32'h01234567);
-// 	#130 aud_write(32'h89abcdef);
-// 	#130 aud_write(32'hDEADBEEF);
-// 	#130 aud_write(32'hbeefdeaf);
-
-// end
 endmodule

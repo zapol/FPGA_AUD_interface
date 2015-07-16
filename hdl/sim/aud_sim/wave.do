@@ -55,7 +55,6 @@ add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_re_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_err_reg
 #add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg
 #add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg_d
-add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/wb_adr_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fovf
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fund
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btmfifo_re_reg
