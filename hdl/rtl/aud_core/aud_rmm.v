@@ -40,16 +40,16 @@ reg [2:0] counter;
 
 assign aud_data = aud_data_oe ? aud_data_reg : 4'hZ;
 
-always @(posedge we_i or re_i or posedge clk_i) begin 
+always @(posedge we_i or posedge re_i or posedge clk_i) begin 
 	case (state)
-		`IDLE: if(we_i | re_i) idle_o <= 0;
+		`IDLE: if(we_i | re_i) idle_o <= 0; else idle_o <= 1;
 		`READ_DONE: idle_o <= 1;
 		`WRITE_DONE: idle_o <= 1;
 		`READ_READY: if(err_o) idle_o <= 1;
 	endcase
 end
 
-always @(posedge clk_i or posedge rst_i) begin
+always @(posedge clk_i or negedge clk_i or posedge rst_i) begin
 	if (rst_i) begin
 		state <= `IDLE;
 		addr_reg <= 0;
@@ -59,11 +59,10 @@ always @(posedge clk_i or posedge rst_i) begin
 		aud_data_oe <= 0;
 		size_reg <= 0;
 		err_o <= 0;
-		idle_o <= 1;
 		aud_nsync_o <= 1;
 		counter <= 0;
 	end
-	else begin
+	else if(clk_i) begin
 		case (state)
 			`IDLE: begin
 				err_o <= 0;
@@ -224,79 +223,77 @@ always @(posedge clk_i or posedge rst_i) begin
 				state <= `IDLE;
 			end
 		endcase
+	end else begin
+		case(state)
+			`WRITE_DIR_SWITCH: begin
+				if(aud_data_oe == 0)
+					state <= `WRITE_WAIT_DONE;
+			end
+			`WRITE_WAIT_DONE: begin
+				if ( aud_data[0] ) begin
+					state <= `WRITE_DONE;
+				end
+				if ( aud_data[3:1]!=0 ) begin
+					err_o <= 1;
+				end
+			end
+			`READ_DIR_SWITCH: begin
+				if(aud_data_oe == 0) begin
+					state <= `READ_WAIT_READY;
+				end
+			end
+			`READ_WAIT_READY: begin
+				if ( aud_data[0] ) begin
+					state <= `READ_READY;
+				end
+				if ( aud_data[3:1]!=0 ) begin
+					err_o <= 1;
+				end
+			end
+			`READ_READY: begin
+				if ( err_o ) begin
+					state <= `IDLE;
+				end else begin
+					counter <= 0;
+					state <= `READ_DATA;
+				end
+			end		
+			`READ_DATA: begin		
+				case (counter)
+					0: begin
+						data_reg[3:0] <= aud_data[3:0];
+					end
+					1: begin
+						data_reg[7:4] <= aud_data[3:0];
+					end
+					2: begin
+						data_reg[11:8] <= aud_data[3:0];
+					end
+					3: begin
+						data_reg[15:12] <= aud_data[3:0];
+					end
+					4: begin
+						data_reg[19:16] <= aud_data[3:0];
+					end
+					5: begin
+						data_reg[23:20] <= aud_data[3:0];
+					end
+					6: begin
+						data_reg[27:24] <= aud_data[3:0];
+					end
+					7: begin
+						data_reg[31:28] <= aud_data[3:0];
+					end
+				endcase
+				if(counter == (1<<size_reg)-1) begin
+					data_o[27:0] <= data_reg[27:0];
+					data_o[31:28] <= aud_data[3:0];	// Ugly hack :/
+					state <= `READ_DONE;
+				end else begin
+					counter <= counter+1;
+				end
+			end
+		endcase
 	end
-end
-
-always @(negedge clk_i ) begin
-	case(state)
-		`WRITE_DIR_SWITCH: begin
-			if(aud_data_oe == 0)
-				state <= `WRITE_WAIT_DONE;
-		end
-		`WRITE_WAIT_DONE: begin
-			if ( aud_data[0] ) begin
-				state <= `WRITE_DONE;
-			end
-			if ( aud_data[3:1]!=0 ) begin
-				err_o <= 1;
-			end
-		end
-		`READ_DIR_SWITCH: begin
-			if(aud_data_oe == 0) begin
-				state <= `READ_WAIT_READY;
-			end
-		end
-		`READ_WAIT_READY: begin
-			if ( aud_data[0] ) begin
-				state <= `READ_READY;
-			end
-			if ( aud_data[3:1]!=0 ) begin
-				err_o <= 1;
-			end
-		end
-		`READ_READY: begin
-			if ( err_o ) begin
-				state <= `IDLE;
-			end else begin
-				counter <= 0;
-				state <= `READ_DATA;
-			end
-		end		
-		`READ_DATA: begin		
-			case (counter)
-				0: begin
-					data_reg[3:0] <= aud_data[3:0];
-				end
-				1: begin
-					data_reg[7:4] <= aud_data[3:0];
-				end
-				2: begin
-					data_reg[11:8] <= aud_data[3:0];
-				end
-				3: begin
-					data_reg[15:12] <= aud_data[3:0];
-				end
-				4: begin
-					data_reg[19:16] <= aud_data[3:0];
-				end
-				5: begin
-					data_reg[23:20] <= aud_data[3:0];
-				end
-				6: begin
-					data_reg[27:24] <= aud_data[3:0];
-				end
-				7: begin
-					data_reg[31:28] <= aud_data[3:0];
-				end
-			endcase
-			if(counter == (1<<size_reg)-1) begin
-				data_o[27:0] <= data_reg[27:0];
-				data_o[31:28] <= aud_data[3:0];	// Ugly hack :/
-				state <= `READ_DONE;
-			end else begin
-				counter <= counter+1;
-			end
-		end
-	endcase
 end
 endmodule

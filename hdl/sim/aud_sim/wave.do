@@ -22,10 +22,15 @@ add wave -noupdate -group TB /aud_tb/aud_md
 add wave -noupdate -group AUD /aud_tb/U_AudCore/clk_sys_i
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rst_n_i
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/aud_data
+add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_rst
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_rst
+add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_rst_reg
+add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_rst
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_nrst
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_md
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_nsync
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_ck
+add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_idle
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/wb_adr_i
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/wb_dat_i
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/wb_dat_o
@@ -48,8 +53,6 @@ add wave -noupdate -group AUD -radix unsigned /aud_tb/U_AudCore/rmm_len_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_md_tmp_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_re_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_we_reg
-add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_rst_reg
-add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_idle
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_we_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_re_reg
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_err_reg
@@ -57,17 +60,20 @@ add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_err_reg
 #add wave -noupdate -group AUD /aud_tb/U_AudCore/wb_ack_reg_d
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fovf
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fund
-add wave -noupdate -group AUD /aud_tb/U_AudCore/btmfifo_re_reg
+add wave -noupdate -group AUD /aud_tb/U_AudCore/btmfifo_re
+add wave -noupdate -group AUD /aud_tb/U_AudCore/btmfifo_re_reg_wb
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_fovf
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_fund
-add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_we_reg
-add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_re_reg
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_we
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_we_reg_wb
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_we_reg_rmm
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_re
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_re_reg_wb
+add wave -noupdate -group AUD /aud_tb/U_AudCore/rmmfifo_re_reg_rmm
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_ff
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_fe
-add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_rst
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_ff
 add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_fe
-add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_rst
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/rmmfifo_dat_o
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/btmfifo_dat_o
 add wave -noupdate -group AUD -radix hexadecimal /aud_tb/U_AudCore/rmmfifo_dat_i
@@ -80,7 +86,6 @@ add wave -noupdate -group AUD /aud_tb/U_AudCore/rmm_idle
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_oe_o
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_addrvalid_o
 add wave -noupdate -group AUD /aud_tb/U_AudCore/btm_buserror_o
-add wave -noupdate -group AUD /aud_tb/U_AudCore/aud_rst
 add wave -noupdate -group RMM /aud_tb/U_AudCore/U_AudRmm/clk_i
 add wave -noupdate -group RMM /aud_tb/U_AudCore/U_AudRmm/rst_i
 add wave -noupdate -group RMM -radix hexadecimal /aud_tb/U_AudCore/U_AudRmm/addr_i

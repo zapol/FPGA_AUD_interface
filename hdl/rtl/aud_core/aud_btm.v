@@ -32,10 +32,6 @@ assign oe = oe_reg_d;
 assign addr_valid = addr_valid_reg;
 assign busserror = buserror_reg;
 
-always @(posedge aud_ck) begin 	// Output enable is delayed by half clock cycle to let the data settle
-	oe_reg_d <= oe_reg;
-end
-
 always @(negedge aud_ck or posedge rst) begin
 	if (rst) begin 	// reset
 		last_good_addr	<= 0;
@@ -49,6 +45,7 @@ always @(negedge aud_ck or posedge rst) begin
 		buserror_reg	<= 0;
 	end
 	else begin
+		oe_reg_d <= oe_reg;
 		if(aud_nsync) begin
 			if(rcv_cnt != 0) begin
 				oe_reg <= 1;
@@ -68,9 +65,9 @@ always @(negedge aud_ck or posedge rst) begin
 			rcv_cnt <= 0;
 			
 
-			if(aud_data[3:0] == 0'b0011) begin 				// normal synchronization symbol
+			if(aud_data[3:0] == 4'b0011) begin 				// normal synchronization symbol
 				buserror_reg <= 0;
-			end else if (aud_data[3:2] == 0'b10) begin 		// Start receiving 
+			end else if (aud_data[3:2] == 2'b10) begin 		// Start receiving 
 				buserror_reg <= 0;
 				mode <= aud_data[1:0];
 			end else begin 									// Invalid bus state
